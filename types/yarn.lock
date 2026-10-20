@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@colyseus/schema@^1.0.28":
-  version "1.0.34"
-  resolved "https://registry.yarnpkg.com/@colyseus/schema/-/schema-1.0.34.tgz#b20d3590c78c6aaf006daea9b9541abaff13843d"
-  integrity sha512-2PfCqu9dJlfbkQsxGi9oM+fAmWpPeMLol6tazRdBxb5mj8QykUzRFMY4pipBlUB2tkQ4qidoRMQqjVHj2HznNg==
+"@colyseus/schema@^2.0.37":
+  version "2.0.37"
+  resolved "https://registry.yarnpkg.com/@colyseus/schema/-/schema-2.0.37.tgz#4bf1509b183133ae3a827af897974d8236874d01"
+  integrity sha512-+WXEux9DMSaTz9hZKabl6LBuzsxzt9EvOwhXJ/G4rPCaaVkJ+iLxRsq8VbL2ZCx18E/uQH6nLaNIQVqH9wEt8w==

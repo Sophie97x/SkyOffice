@@ -247,7 +247,7 @@ export default class Game extends Phaser.Scene {
   }
 
   // function to update target position upon receiving player updates
-  private handlePlayerUpdated(field: string, value: number | string, id: string) {
+  private handlePlayerUpdated(field: string, value: number | string | boolean, id: string) {
     const otherPlayer = this.otherPlayerMap.get(id)
     otherPlayer?.updateOtherPlayer(field, value)
   }

@@ -1,13 +1,13 @@
 import { Command } from '@colyseus/command'
 import { Client } from 'colyseus'
-import { IOfficeState } from '../../../types/IOfficeState'
+import type { SkyOffice } from '../SkyOffice'
 
 type Payload = {
   client: Client
   whiteboardId: string
 }
 
-export class WhiteboardAddUserCommand extends Command<IOfficeState, Payload> {
+export class WhiteboardAddUserCommand extends Command<SkyOffice, Payload> {
   execute(data: Payload) {
     const { client, whiteboardId } = data
     const whiteboard = this.room.state.whiteboards.get(whiteboardId)
@@ -18,7 +18,7 @@ export class WhiteboardAddUserCommand extends Command<IOfficeState, Payload> {
   }
 }
 
-export class WhiteboardRemoveUserCommand extends Command<IOfficeState, Payload> {
+export class WhiteboardRemoveUserCommand extends Command<SkyOffice, Payload> {
   execute(data: Payload) {
     const { client, whiteboardId } = data
     const whiteboard = this.state.whiteboards.get(whiteboardId)

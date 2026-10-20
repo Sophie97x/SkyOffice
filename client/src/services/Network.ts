@@ -21,6 +21,18 @@ import {
 } from '../stores/ChatStore'
 import { setWhiteboardUrls } from '../stores/WhiteboardStore'
 
+export function attachPlayerListeners(
+  player: IPlayer,
+  key: string,
+  emit: (field: string, value: number | string | boolean, key: string) => void
+) {
+  player.listen('x', (value) => emit('x', value, key))
+  player.listen('y', (value) => emit('y', value, key))
+  player.listen('anim', (value) => emit('anim', value, key))
+  player.listen('readyToConnect', (value) => emit('readyToConnect', value, key))
+  player.listen('videoConnected', (value) => emit('videoConnected', value, key))
+}
+
 export default class Network {
   private client: Client
   private room?: Room<IOfficeState>
@@ -99,47 +111,45 @@ export default class Network {
     this.webRTC = new WebRTC(this.mySessionId, this)
 
     // new instance added to the players MapSchema
-    this.room.state.players.onAdd = (player: IPlayer, key: string) => {
+    this.room.state.players.onAdd((player: IPlayer, key: string) => {
       if (key === this.mySessionId) return
 
       // track changes on every child object inside the players MapSchema
-      player.onChange = (changes) => {
-        changes.forEach((change) => {
-          const { field, value } = change
-          phaserEvents.emit(Event.PLAYER_UPDATED, field, value, key)
-
-          // when a new player finished setting up player name
-          if (field === 'name' && value !== '') {
-            phaserEvents.emit(Event.PLAYER_JOINED, player, key)
-            store.dispatch(setPlayerNameMap({ id: key, name: value }))
-            store.dispatch(pushPlayerJoinedMessage(value))
-          }
-        })
-      }
-    }
+      attachPlayerListeners(player, key, (field, value, playerKey) => {
+        phaserEvents.emit(Event.PLAYER_UPDATED, field, value, playerKey)
+      })
+      player.listen('name', (value) => {
+        phaserEvents.emit(Event.PLAYER_UPDATED, 'name', value, key)
+        if (value !== '') {
+          phaserEvents.emit(Event.PLAYER_JOINED, player, key)
+          store.dispatch(setPlayerNameMap({ id: key, name: value }))
+          store.dispatch(pushPlayerJoinedMessage(value))
+        }
+      })
+    })
 
     // an instance removed from the players MapSchema
-    this.room.state.players.onRemove = (player: IPlayer, key: string) => {
+    this.room.state.players.onRemove((player: IPlayer, key: string) => {
       phaserEvents.emit(Event.PLAYER_LEFT, key)
       this.webRTC?.deleteVideoStream(key)
       this.webRTC?.deleteOnCalledVideoStream(key)
       store.dispatch(pushPlayerLeftMessage(player.name))
       store.dispatch(removePlayerNameMap(key))
-    }
+    })
 
     // new instance added to the computers MapSchema
-    this.room.state.computers.onAdd = (computer: IComputer, key: string) => {
+    this.room.state.computers.onAdd((computer: IComputer, key: string) => {
       // track changes on every child object's connectedUser
-      computer.connectedUser.onAdd = (item, index) => {
+      computer.connectedUser.onAdd((item, index) => {
         phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.COMPUTER)
-      }
-      computer.connectedUser.onRemove = (item, index) => {
+      })
+      computer.connectedUser.onRemove((item, index) => {
         phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.COMPUTER)
-      }
-    }
+      })
+    })
 
     // new instance added to the whiteboards MapSchema
-    this.room.state.whiteboards.onAdd = (whiteboard: IWhiteboard, key: string) => {
+    this.room.state.whiteboards.onAdd((whiteboard: IWhiteboard, key: string) => {
       store.dispatch(
         setWhiteboardUrls({
           whiteboardId: key,
@@ -147,18 +157,18 @@ export default class Network {
         })
       )
       // track changes on every child object's connectedUser
-      whiteboard.connectedUser.onAdd = (item, index) => {
+      whiteboard.connectedUser.onAdd((item, index) => {
         phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.WHITEBOARD)
-      }
-      whiteboard.connectedUser.onRemove = (item, index) => {
+      })
+      whiteboard.connectedUser.onRemove((item, index) => {
         phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.WHITEBOARD)
-      }
-    }
+      })
+    })
 
     // new instance added to the chatMessages ArraySchema
-    this.room.state.chatMessages.onAdd = (item, index) => {
+    this.room.state.chatMessages.onAdd((item, index) => {
       store.dispatch(pushChatMessage(item))
-    }
+    })
 
     // when the server sends room data
     this.room.onMessage(Message.SEND_ROOM_DATA, (content) => {
@@ -225,7 +235,7 @@ export default class Network {
 
   // method to register event listener and call back function when a player updated
   onPlayerUpdated(
-    callback: (field: string, value: number | string, key: string) => void,
+    callback: (field: string, value: number | string | boolean, key: string) => void,
     context?: any
   ) {
     phaserEvents.on(Event.PLAYER_UPDATED, callback, context)
