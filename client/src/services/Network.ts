@@ -21,6 +21,18 @@ import {
 } from '../stores/ChatStore'
 import { setWhiteboardUrls } from '../stores/WhiteboardStore'
 
+export function attachPlayerListeners(
+  player: IPlayer,
+  key: string,
+  emit: (field: string, value: number | string | boolean, key: string) => void
+) {
+  player.listen('x', (value) => emit('x', value, key))
+  player.listen('y', (value) => emit('y', value, key))
+  player.listen('anim', (value) => emit('anim', value, key))
+  player.listen('readyToConnect', (value) => emit('readyToConnect', value, key))
+  player.listen('videoConnected', (value) => emit('videoConnected', value, key))
+}
+
 export default class Network {
   private client: Client
   private room?: Room<IOfficeState>
@@ -103,9 +115,9 @@ export default class Network {
       if (key === this.mySessionId) return
 
       // track changes on every child object inside the players MapSchema
-      player.listen('x', (value) => phaserEvents.emit(Event.PLAYER_UPDATED, 'x', value, key))
-      player.listen('y', (value) => phaserEvents.emit(Event.PLAYER_UPDATED, 'y', value, key))
-      player.listen('anim', (value) => phaserEvents.emit(Event.PLAYER_UPDATED, 'anim', value, key))
+      attachPlayerListeners(player, key, (field, value, playerKey) => {
+        phaserEvents.emit(Event.PLAYER_UPDATED, field, value, playerKey)
+      })
       player.listen('name', (value) => {
         phaserEvents.emit(Event.PLAYER_UPDATED, 'name', value, key)
         if (value !== '') {
@@ -223,7 +235,7 @@ export default class Network {
 
   // method to register event listener and call back function when a player updated
   onPlayerUpdated(
-    callback: (field: string, value: number | string, key: string) => void,
+    callback: (field: string, value: number | string | boolean, key: string) => void,
     context?: any
   ) {
     phaserEvents.on(Event.PLAYER_UPDATED, callback, context)
