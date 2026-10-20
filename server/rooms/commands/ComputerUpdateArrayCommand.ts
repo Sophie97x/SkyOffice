@@ -1,5 +1,5 @@
 import { Command } from '@colyseus/command'
-import { Client } from 'colyseus'
+import { Client } from '@colyseus/core'
 import type { SkyOffice } from '../SkyOffice'
 
 type Payload = {

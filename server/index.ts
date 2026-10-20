@@ -2,7 +2,8 @@ import http from 'http'
 import { timingSafeEqual } from 'crypto'
 import express from 'express'
 import cors from 'cors'
-import { Server, LobbyRoom } from 'colyseus'
+import { Server, LobbyRoom } from '@colyseus/core'
+import { WebSocketTransport } from '@colyseus/ws-transport'
 import { monitor } from '@colyseus/monitor'
 import { RoomType } from '../types/Rooms'
 
@@ -19,7 +20,7 @@ app.use(express.json())
 
 const server = http.createServer(app)
 const gameServer = new Server({
-  server,
+  transport: new WebSocketTransport({ server }),
 })
 
 // register room handlers

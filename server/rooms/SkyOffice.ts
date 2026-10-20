@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { Room, Client, ServerError } from 'colyseus'
+import { Room, Client, ServerError } from '@colyseus/core'
 import { Dispatcher } from '@colyseus/command'
 import { Player, OfficeState, Computer, Whiteboard } from './schema/OfficeState'
 import { Message } from '../../types/Messages'
