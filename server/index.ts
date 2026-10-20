@@ -1,5 +1,5 @@
 import http from 'http'
-import { createHash, timingSafeEqual } from 'crypto'
+import { timingSafeEqual } from 'crypto'
 import express from 'express'
 import cors from 'cors'
 import { Server, LobbyRoom } from 'colyseus'
@@ -44,10 +44,17 @@ gameServer.define(RoomType.CUSTOM, SkyOffice).enableRealtimeListing()
 // Deploy behind an HTTPS reverse proxy; Basic credentials are only base64 encoded.
 const monitorUsername = process.env.MONITOR_USERNAME
 const monitorPassword = process.env.MONITOR_PASSWORD
+// Compare raw credential bytes without storing a fast password hash. Padding keeps
+// timingSafeEqual inputs equal-sized; the length check rejects padded/truncated values.
+function equalCredential(expected: string, actual: string): boolean {
+  const expectedBytes = Buffer.from(expected, 'utf8')
+  const actualBytes = Buffer.from(actual, 'utf8')
+  const padded = Buffer.alloc(expectedBytes.length)
+  actualBytes.copy(padded)
+  const bytesMatch = timingSafeEqual(expectedBytes, padded)
+  return bytesMatch && actualBytes.length === expectedBytes.length
+}
 if (monitorUsername && monitorPassword) {
-  const expectedDigest = createHash('sha256')
-    .update(`${monitorUsername}\0${monitorPassword}`)
-    .digest()
 
   app.use('/colyseus', (req, res, next) => {
     const authorization = req.headers.authorization || ''
@@ -63,11 +70,10 @@ if (monitorUsername && monitorPassword) {
     const separator = supplied.indexOf(':')
     const username = separator < 0 ? '' : supplied.slice(0, separator)
     const password = separator < 0 ? '' : supplied.slice(separator + 1)
-    const suppliedDigest = createHash('sha256')
-      .update(`${username}\0${password}`)
-      .digest()
+    const usernameMatches = equalCredential(monitorUsername, username)
+    const passwordMatches = equalCredential(monitorPassword, password)
 
-    if (separator < 0 || !timingSafeEqual(expectedDigest, suppliedDigest)) {
+    if (separator < 0 || !usernameMatches || !passwordMatches) {
       res.setHeader('WWW-Authenticate', 'Basic realm="SkyOffice monitor"')
       res.sendStatus(401)
       return

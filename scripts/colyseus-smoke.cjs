@@ -79,6 +79,10 @@ async function checkAuthenticatedLifecycle() {
     if (noAuth.status !== 401 || badAuth.status !== 401 || goodAuth.status !== 200) {
       throw new Error(`monitor statuses were unauth=${noAuth.status}, bad=${badAuth.status}, good=${goodAuth.status}; expected 401/401/200`)
     }
+    for (const value of ['smoke-user:smoke-secre', 'smoke-user:smoke-secret-extra', 'smoke-user:smoke-secret\0', 'smoke-user\0:smoke-secret']) {
+      const denied = await fetch(url, { headers: { Authorization: `Basic ${Buffer.from(value).toString('base64')}` } })
+      if (denied.status !== 401) throw new Error('monitor accepted altered credential bytes')
+    }
     console.log('PASS monitor auth: missing 401, incorrect 401, correct 200')
 
     const client = new Client(`ws://127.0.0.1:${server.port}`)
@@ -109,4 +113,4 @@ async function checkAuthenticatedLifecycle() {
 ;(async () => {
   await checkMonitorDisabled()
   await checkAuthenticatedLifecycle()
-})().catch(error => { console.error(error); process.exitCode = 1 })
+})().catch(() => { console.error('Security smoke test failed; inspect the last lifecycle step locally.'); process.exitCode = 1 })
