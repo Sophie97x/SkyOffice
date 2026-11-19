@@ -45,6 +45,7 @@
     "@colyseus/ws-transport": "0.15.3"
   },
   "resolutions": {
+    "@colyseus/core/nanoid": "file:./compat/colyseus-id",
     "@colyseus/core/ws": "7.5.13",
     "@colyseus/ws-transport/ws": "8.22.0",
     "@colyseus/monitor/express": "4.22.3",
